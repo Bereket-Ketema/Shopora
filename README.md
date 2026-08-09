@@ -1,4 +1,4 @@
-# 📱 Product Management App
+# 📱 Shopora Product Management App
 
 A simple ecommerce mobile application built with Flutter that allows users to create, view, update, and delete products. This app demonstrates core Flutter concepts including navigation, routing, state management, and CRUD operations.
 
