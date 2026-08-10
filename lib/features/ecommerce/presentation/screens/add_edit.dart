@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/repositories/product_repository.dart';
 import '../../domain/usecases/insert_product_usecase.dart';
 import '../../domain/usecases/update_product_usecase.dart';
-import '../../data/repositories/product_repository_impl.dart';
 
 class AddEditScreen extends StatefulWidget {
-  const AddEditScreen({super.key});
+  final ProductRepository repository;
+
+  const AddEditScreen({super.key, required this.repository});
 
   @override
   State<AddEditScreen> createState() => _AddEditScreenState();
@@ -16,7 +18,6 @@ class _AddEditScreenState extends State<AddEditScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
 
-  final _repository = ProductRepositoryImpl();
   late final InsertProductUsecase _insertProductUsecase;
   late final UpdateProductUsecase _updateProductUsecase;
 
@@ -27,8 +28,8 @@ class _AddEditScreenState extends State<AddEditScreen> {
   @override
   void initState() {
     super.initState();
-    _insertProductUsecase = InsertProductUsecase(_repository);
-    _updateProductUsecase = UpdateProductUsecase(_repository);
+    _insertProductUsecase = InsertProductUsecase(widget.repository);
+    _updateProductUsecase = UpdateProductUsecase(widget.repository);
   }
 
   @override
@@ -42,6 +43,14 @@ class _AddEditScreenState extends State<AddEditScreen> {
       _descriptionController.text = product.description;
       _priceController.text = product.price.toString();
     }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    _priceController.dispose();
+    super.dispose();
   }
 
   @override
@@ -113,17 +122,21 @@ class _AddEditScreenState extends State<AddEditScreen> {
     final priceText = _priceController.text.trim();
 
     if (name.isEmpty || description.isEmpty || priceText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please fill all fields')),
+        );
+      }
       return;
     }
 
     final price = double.tryParse(priceText);
     if (price == null || price <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid price')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a valid price')),
+        );
+      }
       return;
     }
 
