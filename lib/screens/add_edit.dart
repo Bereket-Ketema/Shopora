@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import '../models/product.dart';
+import '../domain/entities/product.dart';
+import '../domain/usecases/create_product_usecase.dart';
+import '../domain/usecases/update_product_usecase.dart';
+import '../data/repositories/product_repository_impl.dart';  // ✅ If you need NoParams
 
 class AddEdit extends StatefulWidget {
   const AddEdit({super.key});
@@ -13,19 +16,30 @@ class _AddEditState extends State<AddEdit> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   
-  bool isEditing = false;
-  Product? editingProduct;
+  final _repository = ProductRepositoryImpl();
+  late final CreateProductUsecase _createProductUsecase;
+  late final UpdateProductUsecase _updateProductUsecase;
+  
+  bool _isEditing = false;
+  Product? _editingProduct;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _createProductUsecase = CreateProductUsecase(_repository);
+    _updateProductUsecase = UpdateProductUsecase(_repository);
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     
-    // Get the product passed from the previous screen
     final Product? product = ModalRoute.of(context)?.settings.arguments as Product?;
     
-    if (product != null && !isEditing) {
-      isEditing = true;
-      editingProduct = product;
+    if (product != null && !_isEditing) {
+      _isEditing = true;
+      _editingProduct = product;
       _titleController.text = product.title;
       _descriptionController.text = product.description;
       _priceController.text = product.price.toString();
@@ -44,7 +58,7 @@ class _AddEditState extends State<AddEdit> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Product' : 'Add Product'),
+        title: Text(_isEditing ? 'Edit Product' : 'Add Product'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -75,74 +89,91 @@ class _AddEditState extends State<AddEdit> {
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _saveProduct,
-                    child: const Text('Save'),
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _saveProduct,
+                          child: const Text('Save'),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context, false), // ✅ Return false for cancel
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey,
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey,
-                    ),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
     );
   }
 
-  void _saveProduct() {
-    // Get text from controllers
+  Future<void> _saveProduct() async {
+    // Validate
     String title = _titleController.text.trim();
     String description = _descriptionController.text.trim();
     String priceText = _priceController.text.trim();
     
-    // Validate
     if (title.isEmpty || description.isEmpty || priceText.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all fields')),
-      );
+      _showError('Please fill all fields');
       return;
     }
     
     double price = double.tryParse(priceText) ?? 0.0;
     if (price <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid price')),
-      );
+      _showError('Please enter a valid price');
       return;
     }
-    
-    // ✅ Check if editing or adding
-    if (isEditing && editingProduct != null) {
-      // EDITING: Return updated product (keep the same ID)
-      Product updatedProduct = Product(
-        id: editingProduct!.id,
-        title: title,
-        description: description,
-        price: price,
-      );
-      Navigator.pop(context, updatedProduct);
-    } else {
-      // ADDING: Create new product
-      Product newProduct = Product.create(
-        title: title,
-        description: description,
-        price: price,
-      );
-      Navigator.pop(context, newProduct);
+
+    setState(() => _isLoading = true);
+
+    try {
+      if (_isEditing && _editingProduct != null) {
+        // ✅ EDITING: Update existing product
+        final updatedProduct = _editingProduct!.copyWith(
+          title: title,
+          description: description,
+          price: price,
+        );
+        await _updateProductUsecase(updatedProduct);
+        // ✅ Return true to indicate success
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
+      } else {
+        // ✅ ADDING: Create new product
+        final newProduct = Product.create(
+          title: title,
+          description: description,
+          price: price,
+        );
+        await _createProductUsecase(newProduct);
+        // ✅ Return true to indicate success
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
+      }
+    } catch (e) {
+      _showError('Failed to save product');
+      setState(() => _isLoading = false);
     }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 }
