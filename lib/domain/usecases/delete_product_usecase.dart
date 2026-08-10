@@ -9,6 +9,9 @@ class DeleteProductUsecase implements UseCase<void, String> {
 
   @override
   Future<void> call(String id) async {
+    if (id.isEmpty) {
+      throw Exception('Product ID cannot be empty');
+    }
     await repository.deleteProduct(id);
   }
 }

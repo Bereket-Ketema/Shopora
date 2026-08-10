@@ -1,45 +1,45 @@
 class Product {
   final String id;
-  String title;
-  String description;
-  String imageUrl;      // ✅ Added new field
-  double price;
+  final String name;        // ✅ Use 'name'
+  final String description;
+  final double price;
+  final String imageUrl;
 
   Product({
     required this.id,
-    required this.title,
+    required this.name,      // ✅ Use 'name'
     required this.description,
-    this.imageUrl = '',   // Default empty string
     required this.price,
+    this.imageUrl = '',
   });
 
   factory Product.create({
-    required String title,
+    required String name,    // ✅ Use 'name'
     required String description,
+    double price = 0.0,
     String imageUrl = '',
-    required double price,
   }) {
     return Product(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
+      name: name,
       description: description,
-      imageUrl: imageUrl,
       price: price,
+      imageUrl: imageUrl,
     );
   }
 
   Product copyWith({
-    String? title,
+    String? name,
     String? description,
-    String? imageUrl,
     double? price,
+    String? imageUrl,
   }) {
     return Product(
       id: id,
-      title: title ?? this.title,
+      name: name ?? this.name,
       description: description ?? this.description,
-      imageUrl: imageUrl ?? this.imageUrl,
       price: price ?? this.price,
+      imageUrl: imageUrl ?? this.imageUrl,
     );
   }
 }
