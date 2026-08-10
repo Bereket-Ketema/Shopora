@@ -32,10 +32,16 @@ class _DetailState extends State<Detail> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_product.title),
+        title: Text(_product.name),  // ✅ Use 'name'
         actions: [
           IconButton(
-            onPressed: _navigateToEdit,
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                '/add-edit',
+                arguments: _product,
+              );
+            },
             icon: const Icon(Icons.edit),
           ),
         ],
@@ -46,7 +52,7 @@ class _DetailState extends State<Detail> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _product.title,
+              _product.name,  // ✅ Use 'name'
               style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -76,7 +82,6 @@ class _DetailState extends State<Detail> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                       child: const Text('Delete Product'),
                     ),
@@ -87,45 +92,20 @@ class _DetailState extends State<Detail> {
     );
   }
 
-  Future<void> _navigateToEdit() async {
-    final result = await Navigator.pushNamed(
-      context,
-      '/add-edit',
-      arguments: _product,
-    );
-
-    if (result == true) {
-      // Product was updated, refresh the detail screen
-      final updatedProduct = await _repository.getProductById(_product.id);
-      if (updatedProduct != null) {
-        setState(() => _product = updatedProduct);
-        Navigator.pop(context, true);
-      }
-    }
-  }
-
   Future<void> _deleteProduct() async {
-    showDialog(
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Delete Product'),
-          content: Text('Are you sure you want to delete "${_product.title}"?'),
+          content: Text('Delete "${_product.name}"?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () async {
-                Navigator.pop(context);
-                setState(() => _isLoading = true);
-                await _deleteProductUsecase(_product.id);
-                if (mounted) {
-                  setState(() => _isLoading = false);
-                  Navigator.pop(context, 'delete');
-                }
-              },
+              onPressed: () => Navigator.pop(context, true),
               style: TextButton.styleFrom(
                 foregroundColor: Colors.red,
               ),
@@ -135,5 +115,28 @@ class _DetailState extends State<Detail> {
         );
       },
     );
+
+    if (confirm == true) {
+      setState(() => _isLoading = true);
+      try {
+        await _deleteProductUsecase(_product.id);
+        if (mounted) {
+          Navigator.pop(context, 'delete');
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    }
   }
 }

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../domain/entities/product.dart';
-import '../domain/usecases/create_product_usecase.dart';
-import '../domain/usecases/update_product_usecase.dart';
-import '../data/repositories/product_repository_impl.dart';  // ✅ If you need NoParams
+import '../domain/usecases/usecase.dart';
+import '../data/repositories/product_repository_impl.dart';
 
 class AddEdit extends StatefulWidget {
   const AddEdit({super.key});
@@ -12,14 +11,14 @@ class AddEdit extends StatefulWidget {
 }
 
 class _AddEditState extends State<AddEdit> {
-  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
-  
+
   final _repository = ProductRepositoryImpl();
-  late final CreateProductUsecase _createProductUsecase;
+  late final InsertProductUsecase _insertProductUsecase;
   late final UpdateProductUsecase _updateProductUsecase;
-  
+
   bool _isEditing = false;
   Product? _editingProduct;
   bool _isLoading = false;
@@ -27,31 +26,21 @@ class _AddEditState extends State<AddEdit> {
   @override
   void initState() {
     super.initState();
-    _createProductUsecase = CreateProductUsecase(_repository);
+    _insertProductUsecase = InsertProductUsecase(_repository);
     _updateProductUsecase = UpdateProductUsecase(_repository);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    
-    final Product? product = ModalRoute.of(context)?.settings.arguments as Product?;
-    
-    if (product != null && !_isEditing) {
+    final product = ModalRoute.of(context)?.settings.arguments as Product?;
+    if (product != null) {
       _isEditing = true;
       _editingProduct = product;
-      _titleController.text = product.title;
+      _nameController.text = product.name;  // ✅ Use 'name'
       _descriptionController.text = product.description;
       _priceController.text = product.price.toString();
     }
-  }
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _descriptionController.dispose();
-    _priceController.dispose();
-    super.dispose();
   }
 
   @override
@@ -65,9 +54,9 @@ class _AddEditState extends State<AddEdit> {
         child: Column(
           children: [
             TextFormField(
-              controller: _titleController,
+              controller: _nameController,
               decoration: const InputDecoration(
-                labelText: 'Product Title',
+                labelText: 'Product Name',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -102,7 +91,7 @@ class _AddEditState extends State<AddEdit> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: () => Navigator.pop(context, false), // ✅ Return false for cancel
+                          onPressed: () => Navigator.pop(context),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey,
                           ),
@@ -118,19 +107,22 @@ class _AddEditState extends State<AddEdit> {
   }
 
   Future<void> _saveProduct() async {
-    // Validate
-    String title = _titleController.text.trim();
-    String description = _descriptionController.text.trim();
-    String priceText = _priceController.text.trim();
-    
-    if (title.isEmpty || description.isEmpty || priceText.isEmpty) {
-      _showError('Please fill all fields');
+    final name = _nameController.text.trim();
+    final description = _descriptionController.text.trim();
+    final priceText = _priceController.text.trim();
+
+    if (name.isEmpty || description.isEmpty || priceText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields')),
+      );
       return;
     }
-    
-    double price = double.tryParse(priceText) ?? 0.0;
-    if (price <= 0) {
-      _showError('Please enter a valid price');
+
+    final price = double.tryParse(priceText);
+    if (price == null || price <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid price')),
+      );
       return;
     }
 
@@ -138,42 +130,36 @@ class _AddEditState extends State<AddEdit> {
 
     try {
       if (_isEditing && _editingProduct != null) {
-        // ✅ EDITING: Update existing product
-        final updatedProduct = _editingProduct!.copyWith(
-          title: title,
+        final updated = _editingProduct!.copyWith(
+          name: name,
           description: description,
           price: price,
         );
-        await _updateProductUsecase(updatedProduct);
-        // ✅ Return true to indicate success
-        if (mounted) {
-          Navigator.pop(context, true);
-        }
+        await _updateProductUsecase(updated);
       } else {
-        // ✅ ADDING: Create new product
         final newProduct = Product.create(
-          title: title,
+          name: name,
           description: description,
           price: price,
         );
-        await _createProductUsecase(newProduct);
-        // ✅ Return true to indicate success
-        if (mounted) {
-          Navigator.pop(context, true);
-        }
+        await _insertProductUsecase(newProduct);
+      }
+      if (mounted) {
+        Navigator.pop(context, true);
       }
     } catch (e) {
-      _showError('Failed to save product');
-      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-  }
-
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
-    );
   }
 }
