@@ -1,8 +1,7 @@
-import '../repositories/product_repository.dart';
+import '../../../../core/usecases/usecase.dart';
 import '../entities/product.dart';
-import 'usecase.dart';
+import '../repositories/product_repository.dart';
 
-/// Use case to get all products
 class ViewAllProductsUsecase implements UseCase<List<Product>, NoParams> {
   final ProductRepository repository;
 

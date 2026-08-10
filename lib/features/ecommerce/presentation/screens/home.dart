@@ -1,19 +1,19 @@
 import 'package:flutter/material.dart';
-import '../domain/entities/product.dart';
-import '../domain/usecases/usecase.dart';  // ✅ Single import
-import '../data/repositories/product_repository_impl.dart';
+import '../../domain/entities/product.dart';
+import '../../domain/usecases/view_all_products_usecase.dart';
+import '../../data/repositories/product_repository_impl.dart';
+import '../../../../core/usecases/usecase.dart';
 
-class Home extends StatefulWidget {
-  const Home({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<Home> createState() => _HomeState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeState extends State<Home> {
+class _HomeScreenState extends State<HomeScreen> {
   final _repository = ProductRepositoryImpl();
   late final ViewAllProductsUsecase _viewAllProductsUsecase;
-  // late final DeleteProductUsecase _deleteProductUsecase;  // ❌ Remove if unused
 
   List<Product> _products = [];
   bool _isLoading = true;
@@ -22,7 +22,6 @@ class _HomeState extends State<Home> {
   void initState() {
     super.initState();
     _viewAllProductsUsecase = ViewAllProductsUsecase(_repository);
-    // _deleteProductUsecase = DeleteProductUsecase(_repository);  // ❌ Remove if unused
     _loadProducts();
   }
 

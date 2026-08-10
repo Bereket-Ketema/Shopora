@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import '../domain/entities/product.dart';
-import '../domain/usecases/delete_product_usecase.dart';
-import '../data/repositories/product_repository_impl.dart';
+import '../../domain/entities/product.dart';
+import '../../domain/usecases/delete_product_usecase.dart';
+import '../../data/repositories/product_repository_impl.dart';
 
-class Detail extends StatefulWidget {
-  const Detail({super.key});
+class DetailScreen extends StatefulWidget {
+  const DetailScreen({super.key});
 
   @override
-  State<Detail> createState() => _DetailState();
+  State<DetailScreen> createState() => _DetailScreenState();
 }
 
-class _DetailState extends State<Detail> {
+class _DetailScreenState extends State<DetailScreen> {
   late Product _product;
   final _repository = ProductRepositoryImpl();
   late final DeleteProductUsecase _deleteProductUsecase;
@@ -32,7 +32,7 @@ class _DetailState extends State<Detail> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_product.name),  // ✅ Use 'name'
+        title: Text(_product.name),
         actions: [
           IconButton(
             onPressed: () {
@@ -52,7 +52,7 @@ class _DetailState extends State<Detail> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _product.name,  // ✅ Use 'name'
+              _product.name,
               style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,

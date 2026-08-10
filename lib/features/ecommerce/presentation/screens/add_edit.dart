@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import '../domain/entities/product.dart';
-import '../domain/usecases/usecase.dart';
-import '../data/repositories/product_repository_impl.dart';
+import '../../domain/entities/product.dart';
+import '../../domain/usecases/insert_product_usecase.dart';
+import '../../domain/usecases/update_product_usecase.dart';
+import '../../data/repositories/product_repository_impl.dart';
 
-class AddEdit extends StatefulWidget {
-  const AddEdit({super.key});
+class AddEditScreen extends StatefulWidget {
+  const AddEditScreen({super.key});
 
   @override
-  State<AddEdit> createState() => _AddEditState();
+  State<AddEditScreen> createState() => _AddEditScreenState();
 }
 
-class _AddEditState extends State<AddEdit> {
+class _AddEditScreenState extends State<AddEditScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
@@ -37,7 +38,7 @@ class _AddEditState extends State<AddEdit> {
     if (product != null) {
       _isEditing = true;
       _editingProduct = product;
-      _nameController.text = product.name;  // ✅ Use 'name'
+      _nameController.text = product.name;
       _descriptionController.text = product.description;
       _priceController.text = product.price.toString();
     }

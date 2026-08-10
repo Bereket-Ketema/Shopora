@@ -1,7 +1,6 @@
+import '../../../../core/usecases/usecase.dart';
 import '../repositories/product_repository.dart';
-import 'usecase.dart';
 
-/// Use case to delete a product by ID
 class DeleteProductUsecase implements UseCase<void, String> {
   final ProductRepository repository;
 
