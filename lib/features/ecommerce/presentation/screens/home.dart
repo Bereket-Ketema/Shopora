@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:product_7/core/usecases/usecase.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/repositories/product_repository.dart';
 import '../../domain/usecases/view_all_products_usecase.dart';
-import '../../data/repositories/product_repository_impl.dart';
-import '../../../../core/usecases/usecase.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final ProductRepository repository;
+
+  const HomeScreen({super.key, required this.repository});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _repository = ProductRepositoryImpl();
   late final ViewAllProductsUsecase _viewAllProductsUsecase;
+  // ✅ Keep this if using delete, or remove if not
+  // late final DeleteProductUsecase _deleteProductUsecase;
 
   List<Product> _products = [];
   bool _isLoading = true;
@@ -21,14 +24,26 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _viewAllProductsUsecase = ViewAllProductsUsecase(_repository);
+    _viewAllProductsUsecase = ViewAllProductsUsecase(widget.repository);
+    // _deleteProductUsecase = DeleteProductUsecase(widget.repository);
     _loadProducts();
   }
 
   Future<void> _loadProducts() async {
     setState(() => _isLoading = true);
-    _products = await _viewAllProductsUsecase(const NoParams());
-    setState(() => _isLoading = false);
+    try {
+      _products = await _viewAllProductsUsecase(const NoParams());
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading products: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   @override
