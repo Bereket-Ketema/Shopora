@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/repositories/product_repository.dart';
 import '../../domain/usecases/delete_product_usecase.dart';
-import '../../data/repositories/product_repository_impl.dart';
 
 class DetailScreen extends StatefulWidget {
-  const DetailScreen({super.key});
+  final ProductRepository repository;
+
+  const DetailScreen({super.key, required this.repository});
 
   @override
   State<DetailScreen> createState() => _DetailScreenState();
@@ -12,14 +14,13 @@ class DetailScreen extends StatefulWidget {
 
 class _DetailScreenState extends State<DetailScreen> {
   late Product _product;
-  final _repository = ProductRepositoryImpl();
   late final DeleteProductUsecase _deleteProductUsecase;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _deleteProductUsecase = DeleteProductUsecase(_repository);
+    _deleteProductUsecase = DeleteProductUsecase(widget.repository);
   }
 
   @override
