@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/product.dart';
+import '../domain/entities/product.dart';
+import '../domain/usecases/delete_product_usecase.dart';
+import '../data/repositories/product_repository_impl.dart';
 
 class Detail extends StatefulWidget {
   const Detail({super.key});
@@ -9,19 +11,28 @@ class Detail extends StatefulWidget {
 }
 
 class _DetailState extends State<Detail> {
-  late Product product;
+  late Product _product;
+  final _repository = ProductRepositoryImpl();
+  late final DeleteProductUsecase _deleteProductUsecase;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _deleteProductUsecase = DeleteProductUsecase(_repository);
+  }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    product = ModalRoute.of(context)?.settings.arguments as Product;
+    _product = ModalRoute.of(context)?.settings.arguments as Product;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(product.title),
+        title: Text(_product.title),
         actions: [
           IconButton(
             onPressed: _navigateToEdit,
@@ -35,7 +46,7 @@ class _DetailState extends State<Detail> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              product.title,
+              _product.title,
               style: const TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -43,7 +54,7 @@ class _DetailState extends State<Detail> {
             ),
             const SizedBox(height: 16),
             Text(
-              '\$${product.price.toStringAsFixed(2)}',
+              '\$${_product.price.toStringAsFixed(2)}',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -52,22 +63,24 @@ class _DetailState extends State<Detail> {
             ),
             const SizedBox(height: 20),
             Text(
-              product.description,
+              _product.description,
               style: const TextStyle(fontSize: 16),
             ),
             const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _deleteProduct,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text('Delete Product'),
-              ),
-            ),
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _deleteProduct,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text('Delete Product'),
+                    ),
+                  ),
           ],
         ),
       ),
@@ -75,36 +88,43 @@ class _DetailState extends State<Detail> {
   }
 
   Future<void> _navigateToEdit() async {
-    // ✅ Navigate to Add/Edit with the product
     final result = await Navigator.pushNamed(
       context,
       '/add-edit',
-      arguments: product,
+      arguments: _product,
     );
 
-    // ✅ If we got an updated product, return it to Home
-    if (result is Product) {
-      Navigator.pop(context, result);
+    if (result == true) {
+      // Product was updated, refresh the detail screen
+      final updatedProduct = await _repository.getProductById(_product.id);
+      if (updatedProduct != null) {
+        setState(() => _product = updatedProduct);
+        Navigator.pop(context, true);
+      }
     }
   }
 
-  void _deleteProduct() {
+  Future<void> _deleteProduct() async {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Delete Product'),
-          content: Text('Are you sure you want to delete "${product.title}"?'),
+          content: Text('Are you sure you want to delete "${_product.title}"?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
-                // ✅ Return 'delete' signal to Home
-                Navigator.pop(context, 'delete');
+                setState(() => _isLoading = true);
+                await _deleteProductUsecase(_product.id);
+                if (mounted) {
+                  setState(() => _isLoading = false);
+                  Navigator.pop(context, 'delete');
+                }
               },
               style: TextButton.styleFrom(
                 foregroundColor: Colors.red,
