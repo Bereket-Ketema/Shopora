@@ -1,6 +1,5 @@
 import '../../domain/entities/product.dart';
 
-/// ProductModel extends Product with JSON serialization support
 class ProductModel extends Product {
   ProductModel({
     required super.id,
@@ -10,18 +9,16 @@ class ProductModel extends Product {
     super.imageUrl,
   });
 
-  /// Convert from JSON to ProductModel
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
-      id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      name: json['name'] ?? 'Unnamed Product',
-      description: json['description'] ?? 'No description',
-      price: (json['price'] as num?)?.toDouble() ?? 0.0,
-      imageUrl: json['imageUrl'] ?? '',
+      id: json['id'] as dynamic,
+      name: json['name'] as dynamic,
+      description: json['description'] as dynamic,
+      price: json['price'] as dynamic,
+      imageUrl: json['imageUrl'] as dynamic,
     );
   }
 
-  /// Convert to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -32,7 +29,6 @@ class ProductModel extends Product {
     };
   }
 
-  /// Convert from Product entity to ProductModel
   factory ProductModel.fromProduct(Product product) {
     return ProductModel(
       id: product.id,
