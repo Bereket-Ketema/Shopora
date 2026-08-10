@@ -1,14 +1,12 @@
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/product_repository.dart';
 
-/// Implementation of ProductRepository
 class ProductRepositoryImpl implements ProductRepository {
-  // In-memory storage (replace with database later)
-  List<Product> _products = [];
+  final List<Product> _products = [];
 
   @override
   Future<List<Product>> getAllProducts() async {
-    return _products;
+    return List.from(_products);
   }
 
   @override
@@ -21,7 +19,8 @@ class ProductRepositoryImpl implements ProductRepository {
   }
 
   @override
-  Future<Product> createProduct(Product product) async {
+  Future<Product> insertProduct(Product product) async {
+    // ✅ Use 'insertProduct'
     _products.add(product);
     return product;
   }
@@ -39,4 +38,11 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<void> deleteProduct(String id) async {
     _products.removeWhere((p) => p.id == id);
   }
-}
+
+  @override
+  Future<Product> createProduct(Product product) async {
+    _products.add(product);
+    return product;
+  }
+
+  }
