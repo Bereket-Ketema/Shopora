@@ -55,17 +55,15 @@ class MyApp extends StatelessWidget {
 // 🎨 Custom Page Route with Smooth Animation
 class CustomPageRoute extends PageRouteBuilder {
   final Widget child;
-  final RouteSettings settings;
 
   CustomPageRoute({
     required this.child,
-    required this.settings,
+    required super.settings,
   }) : super(
-          settings: settings,
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          pageBuilder: (context, animation, secondaryAnimation) => child,
-        );
+    transitionDuration: const Duration(milliseconds: 400),
+    reverseTransitionDuration: const Duration(milliseconds: 300),
+    pageBuilder: (context, animation, secondaryAnimation) => child,
+  );
 
   @override
   Widget buildTransitions(

@@ -25,6 +25,7 @@ class DetailScreen extends StatelessWidget {
                 // 🎯 Handle updated product coming back
                 if (result != null && result is Product) {
                   // We'll implement full update in the next step
+                  // ignore: use_build_context_synchronously
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Product updated successfully!'),
