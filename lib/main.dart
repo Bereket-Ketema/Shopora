@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:product_7/screens/add_edit.dart';
-import 'package:product_7/screens/home.dart';
-import 'package:product_7/screens/detail.dart';
+import 'screens/home.dart';
+import 'screens/add_edit.dart';
+import 'screens/detail.dart';
 
 void main() {
   runApp(const MyApp());
