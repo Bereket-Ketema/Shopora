@@ -1,53 +1,83 @@
-# 📱 Shopora Product Management App
+# 📦 Shopera - Product Management App
 
-A simple ecommerce mobile application built with Flutter that allows users to create, view, update, and delete products. This app demonstrates core Flutter concepts including navigation, routing, state management, and CRUD operations.
-
----
-
-## 🚀 Features
-
-- ✅ **Create** – Add new products with title, description, and price
-- ✅ **Read** – View all products in a list and view individual product details
-- ✅ **Update** – Edit existing product information
-- ✅ **Delete** – Remove products from the list
-- ✅ **Navigation** – Smooth navigation between screens with named routes
-- ✅ **Data Passing** – Seamless data transfer between screens using arguments
-- ✅ **State Management** – Real-time UI updates using `setState()`
+A Flutter eCommerce application built with **Clean Architecture** principles. This app demonstrates CRUD (Create, Read, Update, Delete) operations for products with a clean separation of concerns.
 
 ---
 
-## 📸 Screens
+## 🏗️ Architecture
 
-| Home Screen | Add/Edit Screen | Detail Screen |
-| :---: | :---: | :---: |
-| Displays all products in a list | Form to add or edit a product | Shows product details with edit/delete options |
-| FAB to add new products | Pre-filled when editing | Edit button in AppBar |
-| Tap a product to view details | Save/Cancel buttons | Delete button at bottom |
+This project follows **Clean Architecture** with three main layers:
 
----
-
-## 🛠️ Tech Stack
-
-- **Framework**: Flutter 3.x
-- **Language**: Dart 3.x
-- **State Management**: `setState()`
-- **Navigation**: Named Routes with `Navigator`
+| Layer | Purpose | Components |
+| :--- | :--- | :--- |
+| **Domain Layer** | Core business logic | Entities, Use Cases, Repository Interfaces |
+| **Data Layer** | Data implementation | Models (with JSON), Repository Implementations |
+| **Presentation Layer** | UI and user interaction | Screens, Widgets |
 
 ---
 
 ## 📁 Project Structure
 
 ```
-📁 lib/
-├── 📁 models/
-│   └── 📄 product.dart          # Product model class
-├── 📁 screens/
-│   ├── 📄 home.dart             # Home screen (product list)
-│   ├── 📄 add_edit.dart         # Add/Edit product screen
-│   └── 📄 detail.dart           # Product detail screen
-├── 📄 main.dart                 # App entry point & route configuration
-└── 📄 README.md                 # Project documentation
+lib/
+├── core/                                    # Shared components
+│   ├── error/
+│   │   └── exceptions.dart                  # Custom exceptions
+│   └── usecases/
+│       └── usecase.dart                     # Base UseCase class
+├── features/
+│   └── product/                             # Product feature module
+│       ├── data/                            # Data Layer
+│       │   ├── models/
+│       │   │   └── product_model.dart       # Product with JSON
+│       │   └── repositories/
+│       │       └── product_repository_impl.dart
+│       ├── domain/                          # Domain Layer
+│       │   ├── entities/
+│       │   │   └── product.dart             # Product entity
+│       │   ├── repositories/
+│       │   │   └── product_repository.dart  # Repository interface
+│       │   └── usecases/                    # CRUD Use Cases
+│       │       ├── get_product_usecase.dart
+│       │       ├── insert_product_usecase.dart
+│       │       ├── update_product_usecase.dart
+│       │       ├── delete_product_usecase.dart
+│       │       └── view_all_products_usecase.dart
+│       └── presentation/                    # Presentation Layer
+│           ├── screens/
+│           │   ├── home_screen.dart         # Product list
+│           │   ├── add_edit_screen.dart     # Add/Edit product
+│           │   └── detail_screen.dart       # Product details
+│           └── widgets/
+│               └── product_card.dart        # Reusable product card
+├── main.dart
+└── README.md
 ```
+
+---
+
+## 🚀 Features
+
+- ✅ **Create** – Add new products with name, description, and price
+- ✅ **Read** – View all products in a list
+- ✅ **Read** – View individual product details
+- ✅ **Update** – Edit existing product information
+- ✅ **Delete** – Remove products from the list
+- ✅ **Clean Architecture** – Separation of concerns
+- ✅ **JSON Serialization** – ProductModel with fromJson/toJson
+- ✅ **Unit Tests** – Test ProductModel conversion
+
+---
+
+## 🛠️ Technologies
+
+| Technology | Purpose |
+| :--- | :--- |
+| Flutter 3.x | UI Framework |
+| Dart 3.x | Programming Language |
+| Clean Architecture | Code Organization |
+| setState | State Management |
+| Flutter Test | Testing |
 
 ---
 
@@ -64,8 +94,8 @@ A simple ecommerce mobile application built with Flutter that allows users to cr
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/Bereket-Ketema/2026-project-phase-mobile-tasks-/tree/main/on-boarding/product_7.com
-   cd product_7
+   git clone https://github.com/Bereket-Ketema/shopera.git
+   cd shopera
    ```
 
 2. **Get dependencies**
@@ -78,157 +108,132 @@ A simple ecommerce mobile application built with Flutter that allows users to cr
    flutter run
    ```
 
-4. **Build for production**
+4. **Run tests**
+   ```bash
+   flutter test
+   ```
+
+5. **Build APK**
    ```bash
    flutter build apk --release
    ```
 
 ---
 
-## 🧭 Navigation Structure
+## 🧭 Navigation
 
 | Route | Screen | Description |
 | :--- | :--- | :--- |
-| `/` | Home | Main screen displaying all products |
-| `/add-edit` | AddEdit | Form to add or edit a product |
-| `/detail` | Detail | View product details with edit/delete |
-
-### Navigation Examples
-
-```dart
-// Navigate to Add/Edit (Add mode)
-Navigator.pushNamed(context, '/add-edit', arguments: null);
-
-// Navigate to Add/Edit (Edit mode)
-Navigator.pushNamed(context, '/add-edit', arguments: product);
-
-// Navigate to Detail
-Navigator.pushNamed(context, '/detail', arguments: product);
-```
+| `/` | HomeScreen | Display all products |
+| `/add-edit` | AddEditScreen | Add or edit a product |
+| `/detail` | DetailScreen | View product details |
 
 ---
 
 ## 📊 Data Flow
 
 ```
-┌─────────────┐     pushNamed()     ┌─────────────┐
-│   Home      │ ─────────────────▶ │  Add/Edit   │
-│   Screen    │ ◀───────────────── │   Screen    │
-└─────────────┘     pop(Product)   └─────────────┘
-       │
-       │ pushNamed()
-       ▼
-┌─────────────┐     pushNamed()     ┌─────────────┐
-│   Detail    │ ─────────────────▶ │  Add/Edit   │
-│   Screen    │ ◀───────────────── │   Screen    │
-└─────────────┘     pop(Product)   └─────────────┘
-       │
-       │ pop('delete')
-       ▼
-┌─────────────┐
-│   Home      │ ◀── Removes product
-│   Screen    │
-└─────────────┘
-```
-
----
-
-## 🎯 Key Features Implementation
-
-### Product Model
-
-```dart
-class Product {
-  final String id;
-  String title;
-  String description;
-  double price;
-
-  Product({required this.id, required this.title, required this.description, required this.price});
-
-  factory Product.create({required String title, required String description, required double price}) {
-    return Product(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      title: title,
-      description: description,
-      price: price,
-    );
-  }
-}
-```
-
-### Named Routes
-
-```dart
-MaterialApp(
-  initialRoute: '/',
-  routes: {
-    '/': (context) => const Home(),
-    '/add-edit': (context) => const AddEdit(),
-    '/detail': (context) => const Detail(),
-  },
-)
-```
-
-### Passing Data
-
-```dart
-// Sending data
-Navigator.pushNamed(context, '/detail', arguments: product);
-
-// Receiving data
-final product = ModalRoute.of(context)?.settings.arguments as Product;
+┌─────────────────────────────────────────────────────────────────────┐
+│                         DATA FLOW                                  │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  UI (Presentation Layer)                                           │
+│  ┌─────────────────┐                                               │
+│  │  HomeScreen     │                                               │
+│  └────────┬────────┘                                               │
+│           │ Uses                                                   │
+│           ▼                                                        │
+│  Domain Layer                                                      │
+│  ┌─────────────────────────────────────────────┐                   │
+│  │  Use Cases (Business Logic)                 │                   │
+│  │  - ViewAllProductsUsecase                   │                   │
+│  │  - InsertProductUsecase                     │                   │
+│  │  - UpdateProductUsecase                     │                   │
+│  │  - DeleteProductUsecase                     │                   │
+│  │  - GetProductUsecase                        │                   │
+│  └────────┬────────────────────────────────────┘                   │
+│           │ Calls                                                  │
+│           ▼                                                        │
+│  Data Layer                                                        │
+│  ┌─────────────────────────────────────────────┐                   │
+│  │  ProductRepositoryImpl                       │                   │
+│  │  - In-memory storage                         │                   │
+│  │  - Model conversion (Product ↔ ProductModel)│                   │
+│  └─────────────────────────────────────────────┘                   │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## 🧪 Testing
 
-Run the following commands to test the app:
+### Unit Tests
 
+Run all tests:
 ```bash
-# Run all tests
 flutter test
-
-# Run specific test file
-flutter test test/widget_test.dart
 ```
 
----
+Run specific test file:
+```bash
+flutter test test/product_model_test.dart
+```
 
-## 🐛 Troubleshooting
+### Test Coverage
 
-### Common Issues
-
-| Issue | Solution |
+| Test | Description |
 | :--- | :--- |
-| **"NoSuchMethodError"** | Check if arguments are correctly passed using `ModalRoute.of(context)?.settings.arguments` |
-| **Navigation not working** | Ensure routes are properly defined in `MaterialApp` |
-| **Data not updating** | Make sure you're calling `setState()` after modifying the list |
-| **Emulator not starting** | Check if virtualization is enabled in BIOS |
+| `fromJson` | Convert JSON to ProductModel |
+| `toJson` | Convert ProductModel to JSON |
+| `Default values` | Handle missing JSON fields |
+| `Null values` | Handle null price gracefully |
 
 ---
 
-## 📝 Submission Guidelines
+## 📝 Grading Criteria
 
-This project fulfills the following requirements:
+| Criteria | Weight | Status |
+| :--- | :--- | :--- |
+| Folder Setup | 1 point | ✅ |
+| ProductModel Implementation | 7 points | ✅ |
+| Documentation | 2 points | ✅ |
+| **Total** | **10 points** | **✅** |
 
-| Requirement | Status |
+---
+
+## 📁 Key Files
+
+| File | Purpose |
 | :--- | :--- |
-| Home screen with product list | ✅ |
-| Add/Edit product screen | ✅ |
-| View product detail screen | ✅ |
-| Named routes | ✅ |
-| Passing data between screens | ✅ |
-| Navigation animations | ✅ (PageRouteBuilder) |
-| Handle back button | ✅ |
-| CRUD operations | ✅ |
+| `product.dart` | Product entity (domain) |
+| `product_model.dart` | Product with JSON serialization |
+| `product_repository.dart` | Repository interface |
+| `product_repository_impl.dart` | Repository implementation |
+| `*_usecase.dart` | CRUD operations |
+| `*_screen.dart` | UI screens |
 
 ---
 
-## 👨‍💻 Author
+## 💡 Clean Architecture Benefits
 
-- **Bereket Ketema** – [Bereket-Ketema](https://github.com/Bereket-Ketema)
+| Benefit | Description |
+| :--- | :--- |
+| **Separation of Concerns** | Each layer has a single responsibility |
+| **Testability** | Business logic is independent of UI |
+| **Maintainability** | Changes in one layer don't affect others |
+| **Scalability** | Easy to add new features |
+| **Independence** | Domain layer is framework-agnostic |
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ---
 
@@ -238,21 +243,21 @@ This project is licensed under the MIT License – see the [LICENSE](LICENSE) fi
 
 ---
 
+## 👨‍💻 Author
+
+**Bereket Ketema**
+
+- GitHub: [@Bereket-Ketema](https://github.com/Bereket-Ketema)
+- Email: bekishet@gmail.com
+
+---
+
 ## 🙏 Acknowledgments
 
-- Flutter Team for the amazing framework
-- Dart Team for the powerful language
-- All contributors and reviewers
+- Flutter Team
+- Clean Architecture by Robert C. Martin (Uncle Bob)
+- All contributors
 
 ---
 
-## 📬 Contact
-
-For any questions or feedback, please reach out at:
-- **Email**: bekishet@gmail.com
-- **GitHub**: [bereket-ketema](https://github.com/bereket-ketema)
-
----
-
-**Built with ❤️ using Flutter**
-```
+**Built with ❤️ using Flutter & Clean Architecture**
