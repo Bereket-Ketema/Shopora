@@ -1,13 +1,9 @@
 import '../models/product_model.dart';
 import 'product_remote_data_source.dart';
 
-/// Implementation of ProductRemoteDataSource (In-memory for now)
-/// Later, this can be replaced with actual API calls
 class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
-  // In-memory storage (simulating a remote database)
   final List<ProductModel> _products = [];
 
-  // Sample data on initialization
   ProductRemoteDataSourceImpl() {
     _initSampleData();
   }
@@ -43,7 +39,7 @@ class ProductRemoteDataSourceImpl implements ProductRemoteDataSource {
   @override
   Future<List<ProductModel>> getAllProducts() async {
     await Future.delayed(const Duration(milliseconds: 500));
-    return List.from(_products);
+    return List.from(_products); // ✅ Always returns a list, never null
   }
 
   @override

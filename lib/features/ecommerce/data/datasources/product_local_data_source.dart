@@ -16,4 +16,10 @@ abstract class ProductLocalDataSource {
 
   /// Check if cache exists
   Future<bool> hasCachedData();
+
+  /// Get pending sync items (products that need to be synced)
+  Future<List<ProductModel>> getPendingSyncItems();
+
+  /// Mark an item as synced
+  Future<void> markAsSynced(String id);
 }
