@@ -18,38 +18,32 @@ class ProductRepositoryImpl implements ProductRepository {
 
   @override
   Future<List<Product>> getAllProducts() async {
-    try {
-      if (await networkInfo.isConnected) {
-        // Online: Get from remote and cache
+    if (await networkInfo.isConnected) {
+      try {
         final remoteProducts = await remoteDataSource.getAllProducts();
         await localDataSource.cacheProducts(remoteProducts);
         return remoteProducts;
-      } else {
-        // Offline: Get from local cache
-        return await _getCachedProducts();
+      } catch (e) {
+        return await localDataSource.getCachedProducts();
       }
-    } catch (e) {
-      // If remote fails, try cache
-      return await _getCachedProducts();
+    } else {
+      return await localDataSource.getCachedProducts();
     }
   }
 
   @override
   Future<Product?> getProductById(String id) async {
-    try {
-      if (await networkInfo.isConnected) {
-        // Online: Get from remote
+    if (await networkInfo.isConnected) {
+      try {
         final product = await remoteDataSource.getProductById(id);
         if (product != null) {
           await localDataSource.cacheProduct(product);
         }
         return product;
-      } else {
-        // Offline: Get from local cache
+      } catch (e) {
         return await _getCachedProductById(id);
       }
-    } catch (e) {
-      // Fallback to local
+    } else {
       return await _getCachedProductById(id);
     }
   }
@@ -58,21 +52,18 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<Product> insertProduct(Product product) async {
     final productModel = ProductModel.fromProduct(product);
 
-    try {
-      if (await networkInfo.isConnected) {
-        // Online: Save to remote and cache
+    if (await networkInfo.isConnected) {
+      try {
         final created = await remoteDataSource.createProduct(productModel);
         await localDataSource.cacheProduct(created);
         return created;
-      } else {
-        // Offline: Save locally with pending sync
+      } catch (e) {
         await localDataSource.cacheProduct(productModel);
-        throw Exception('Product saved offline. Will sync when online.');
+        throw Exception('Product saved locally. Sync will happen when online.');
       }
-    } catch (e) {
-      // If remote fails, save locally
+    } else {
       await localDataSource.cacheProduct(productModel);
-      throw Exception('Product saved locally. Sync will happen when online.');
+      throw Exception('Product saved offline. Will sync when online.');
     }
   }
 
@@ -80,55 +71,40 @@ class ProductRepositoryImpl implements ProductRepository {
   Future<Product> updateProduct(Product product) async {
     final productModel = ProductModel.fromProduct(product);
 
-    try {
-      if (await networkInfo.isConnected) {
-        // Online: Update remote and cache
+    if (await networkInfo.isConnected) {
+      try {
         final updated = await remoteDataSource.updateProduct(productModel);
         await localDataSource.cacheProduct(updated);
         return updated;
-      } else {
-        // Offline: Update locally
+      } catch (e) {
         await localDataSource.cacheProduct(productModel);
-        throw Exception('Product updated offline. Will sync when online.');
+        throw Exception('Product updated locally. Sync will happen when online.');
       }
-    } catch (e) {
-      // If remote fails, update locally
+    } else {
       await localDataSource.cacheProduct(productModel);
-      throw Exception('Product updated locally. Sync will happen when online.');
+      throw Exception('Product updated offline. Will sync when online.');
     }
   }
 
   @override
   Future<void> deleteProduct(String id) async {
-    try {
-      if (await networkInfo.isConnected) {
-        // Online: Delete from remote and cache
+    if (await networkInfo.isConnected) {
+      try {
         await remoteDataSource.deleteProduct(id);
         await localDataSource.removeCachedProduct(id);
-      } else {
-        // Offline: Delete locally
+      } catch (e) {
         await localDataSource.removeCachedProduct(id);
-        throw Exception('Product deleted offline. Will sync when online.');
+        throw Exception('Product deleted locally. Sync will happen when online.');
       }
-    } catch (e) {
-      // If remote fails, delete locally
+    } else {
       await localDataSource.removeCachedProduct(id);
-      throw Exception('Product deleted locally. Sync will happen when online.');
+      throw Exception('Product deleted offline. Will sync when online.');
     }
-  }
-
-  // Private helper methods
-  Future<List<Product>> _getCachedProducts() async {
-    final cached = await localDataSource.getCachedProducts();
-    if (cached.isEmpty) {
-      throw Exception('No cached products available. Please connect to the internet.');
-    }
-    return cached;
   }
 
   Future<Product?> _getCachedProductById(String id) async {
-    final cached = await localDataSource.getCachedProducts();
     try {
+      final cached = await localDataSource.getCachedProducts();
       return cached.firstWhere((p) => p.id == id);
     } catch (e) {
       return null;
