@@ -9,50 +9,57 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
 
   ProductLocalDataSourceImpl({required this.sharedPreferences});
 
+  // Keys for SharedPreferences storage
   static const String _cacheKey = 'cached_products';
   static const String _pendingSyncKey = 'pending_sync';
 
   @override
   Future<void> cacheProducts(List<ProductModel> products) async {
-    // ✅ Handle null or empty list
-    if (products.isEmpty) {
-      await sharedPreferences.remove(_cacheKey);
-      return;
+    try {
+      final jsonList = products.map((p) => p.toJson()).toList();
+      final jsonString = jsonEncode(jsonList);
+      await sharedPreferences.setString(_cacheKey, jsonString);
+    } catch (e) {
+      throw Exception('Failed to cache products: $e');
     }
-    final jsonList = products.map((p) => p.toJson()).toList();
-    final jsonString = jsonEncode(jsonList);
-    await sharedPreferences.setString(_cacheKey, jsonString);
   }
 
   @override
   Future<List<ProductModel>> getCachedProducts() async {
-    final jsonString = sharedPreferences.getString(_cacheKey);
-    if (jsonString == null || jsonString.isEmpty) {
-      return []; // ✅ Return empty list instead of throwing
-    }
     try {
+      final jsonString = sharedPreferences.getString(_cacheKey);
+      if (jsonString == null) {
+        throw Exception('No cached products found');
+      }
       final List<dynamic> jsonList = jsonDecode(jsonString);
       return jsonList.map((json) => ProductModel.fromJson(json)).toList();
     } catch (e) {
-      return []; // ✅ Return empty list on error
+      throw Exception('Failed to get cached products: $e');
     }
   }
 
   @override
   Future<void> cacheProduct(ProductModel product) async {
     try {
-      final cached = await getCachedProducts();
-      final index = cached.indexWhere((p) => p.id == product.id);
-      final updated = List<ProductModel>.from(cached);
+      List<ProductModel> cachedProducts;
+      try {
+        cachedProducts = await getCachedProducts();
+      } catch (e) {
+        cachedProducts = [];
+      }
+
+      final index = cachedProducts.indexWhere((p) => p.id == product.id);
+      final updated = List<ProductModel>.from(cachedProducts);
+
       if (index != -1) {
         updated[index] = product;
       } else {
         updated.add(product);
       }
+
       await cacheProducts(updated);
     } catch (e) {
-      // If no cache exists, create new one
-      await cacheProducts([product]);
+      throw Exception('Failed to cache product: $e');
     }
   }
 
@@ -69,17 +76,22 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
 
   @override
   Future<bool> hasCachedData() async {
-    final jsonString = sharedPreferences.getString(_cacheKey);
-    return jsonString != null && jsonString.isNotEmpty;
+    return sharedPreferences.containsKey(_cacheKey);
+  }
+
+  @override
+  Future<void> clearCache() async {
+    await sharedPreferences.remove(_cacheKey);
+    await sharedPreferences.remove(_pendingSyncKey);
   }
 
   @override
   Future<List<ProductModel>> getPendingSyncItems() async {
-    final jsonString = sharedPreferences.getString(_pendingSyncKey);
-    if (jsonString == null || jsonString.isEmpty) {
-      return [];
-    }
     try {
+      final jsonString = sharedPreferences.getString(_pendingSyncKey);
+      if (jsonString == null) {
+        return [];
+      }
       final List<dynamic> jsonList = jsonDecode(jsonString);
       return jsonList.map((json) => ProductModel.fromJson(json)).toList();
     } catch (e) {
@@ -89,14 +101,19 @@ class ProductLocalDataSourceImpl implements ProductLocalDataSource {
 
   @override
   Future<void> markAsSynced(String id) async {
-    final pending = await getPendingSyncItems();
-    final updated = pending.where((p) => p.id != id).toList();
-    if (updated.isEmpty) {
-      await sharedPreferences.remove(_pendingSyncKey);
-    } else {
-      final jsonList = updated.map((p) => p.toJson()).toList();
-      final jsonString = jsonEncode(jsonList);
-      await sharedPreferences.setString(_pendingSyncKey, jsonString);
+    try {
+      final pending = await getPendingSyncItems();
+      final updated = pending.where((p) => p.id != id).toList();
+
+      if (updated.isEmpty) {
+        await sharedPreferences.remove(_pendingSyncKey);
+      } else {
+        final jsonList = updated.map((p) => p.toJson()).toList();
+        final jsonString = jsonEncode(jsonList);
+        await sharedPreferences.setString(_pendingSyncKey, jsonString);
+      }
+    } catch (e) {
+      throw Exception('Failed to mark item as synced: $e');
     }
   }
 }
